@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الأستاذ فارس - رياضيات بكالوريا 2027</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
+            background: #f0f4fb;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1.5rem;
+        }
+
+        .platform {
+            max-width: 1400px;
+            width: 100%;
+            min-height: 95vh;
+            background: #ffffff;
+            border-radius: 2.5rem;
+            box-shadow: 0 30px 60px rgba(0, 20, 40, 0.10);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1.5rem;
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        .popup {
+            background: #ffffff;
+            border-radius: 2.5rem;
+            max-width: 520px;
+            width: 100%;
+            padding: 2.5rem 2.5rem 2.2rem;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            animation: popIn 0.4s ease;
+            border-top: 6px solid #c9a84c;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9) translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .popup h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0b2a44;
+            margin-bottom: 0.4rem;
+        }
+
+        .popup h2 span {
+            color: #c9a84c;
+        }
+
+        .popup p {
+            font-size: 1rem;
+            color: #1f4a6b;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .popup .password-input {
+            width: 100%;
+            padding: 0.8rem 1.4rem;
+            border-radius: 60px;
+            border: 2px solid #cbdae9;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 4px;
+            font-family: inherit;
+            outline: none;
+            transition: 0.2s;
+            background: #f8fbff;
+            margin-bottom: 1rem;
+        }
+
+        .popup .password-input:focus {
+            border-color: #c9a84c;
+            box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.12);
+        }
+
+        .popup .popup-actions {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .popup .btn-popup-primary {
+            background: #0b2a44;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 0.7rem 2.8rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            box-shadow: 0 6px 18px rgba(11, 42, 68, 0.15);
+        }
+
+        .popup .btn-popup-primary:hover {
+            background: #1a4a6e;
+            transform: translateY(-2px);
+        }
+
+        .popup .btn-popup-secondary {
+            background: #e8edf5;
+            border: none;
+            color: #1f4a6b;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.7rem 2.2rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .popup .btn-popup-secondary:hover {
+            background: #d5dde9;
+        }
+
+        .popup .popup-error {
+            color: #b13e3e;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .popup .popup-error.show {
+            display: block;
+        }
+
+        .admin-panel {
+            display: none;
+            padding: 1.8rem 3rem 2rem;
+            background: #f8fbff;
+            border-bottom: 1px solid #d3dfed;
+            flex-shrink: 0;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .admin-panel .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .admin-panel .admin-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0b2a44;
+        }
+
+        .admin-panel .admin-header h2 span {
+            color: #c9a84c;
+        }
+
+        .admin-panel .admin-header .admin-actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-panel .btn-logout {
+            background: #d34f4f;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.6rem 2.5rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .admin-panel .btn-logout:hover {
+            background: #b13e3e;
+            transform: translateY(-2px);
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-stats .stat-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.2rem 1.5rem;
+            border: 1px solid #d3dfed;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            transition: 0.2s;
+        }
+
+        .admin-stats .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .admin-stats .stat-card .stat-number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #0b2a44;
+        }
+
+        .admin-stats .stat-card .stat-label {
+            font-size: 0.85rem;
+            color: #4a6f8f;
+            font-weight: 500;
+            margin-top: 0.2rem;
+        }
+
+        /* ====== زر عرض الجدول ====== */
+        .btn-view-table {
+            background: #0b2a44;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.6rem 2rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 14px rgba(11, 42, 68, 0.2);
+        }
+
+        .btn-view-table:hover {
+            background: #1a4a6e;
+            transform: translateY(-2px);
+        }
+
+        .admin-posts-section {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem 1.8rem;
+            border: 1px solid #d3dfed;
+        }
+
+        .admin-posts-section h4 {
+            font-size: 1.2rem;
+            color: #0b2a44;
+            margin-bottom: 0.8rem;
+        }
+
+        .admin-post-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #eef2f7;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-post-item:last-child {
+            border-bottom: none;
+        }
+
+        .admin-post-item .post-content {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #1f4a6b;
+        }
+
+        .admin-post-item .post-content .post-date {
+            font-size: 0.75rem;
+            color: #6a8aaa;
+            margin-right: 0.8rem;
+        }
+
+        .admin-post-item .post-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .admin-post-item .btn-edit {
+            background: #c9a84c;
+            border: none;
+            color: #0b2a44;
+            font-weight: 700;
+            padding: 0.3rem 1.4rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .admin-post-item .btn-edit:hover {
+            background: #b8973a;
+        }
+
+        .admin-post-item .btn-delete-post {
+            background: #d34f4f;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.3rem 1.4rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .admin-post-item .btn-delete-post:hover {
+            background: #b13e3e;
+        }
+
+        .admin-post-create {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eef2f7;
+        }
+
+        .admin-post-create textarea {
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid #cbdae9;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: 0.15s;
+            background: #f8fbff;
+        }
+
+        .admin-post-create textarea:focus {
+            border-color: #c9a84c;
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.08);
+        }
+
+        .admin-post-create .file-upload-area {
+            border: 2px dashed #cbdae9;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            background: #f8fbff;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 0.8rem 0;
+        }
+
+        .admin-post-create .file-upload-area:hover {
+            border-color: #c9a84c;
+            background: #f0f6fe;
+        }
+
+        .admin-post-create .file-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .admin-post-create .file-upload-area .upload-label {
+            display: block;
+            font-weight: 500;
+            color: #1f4a6b;
+        }
+
+        .admin-post-create .file-upload-area .upload-label span {
+            color: #c9a84c;
+            font-weight: 700;
+        }
+
+        .admin-post-create .upload-preview {
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .admin-post-create .upload-preview img {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 0.5rem;
+            border: 1px solid #d3dfed;
+        }
+
+        .admin-post-create .upload-preview .file-name {
+            font-size: 0.9rem;
+            color: #1f4a6b;
+        }
+
+        .admin-post-create .post-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+            align-items: center;
+        }
+
+        .admin-post-create .btn-post {
+            background: #c9a84c;
+            border: none;
+            color: #0b2a44;
+            font-weight: 700;
+            padding: 0.6rem 2.2rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .admin-post-create .btn-post:hover {
+            background: #b8973a;
+            transform: translateY(-2px);
+        }
+
+        .admin-post-create .post-status {
+            font-size: 0.9rem;
+            color: #1f4a6b;
+        }
+
+        .header {
+            background: linear-gradient(145deg, #0b2a44, #1a4a6e);
+            padding: 1.8rem 3rem 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 3px solid #c9a84c;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .teacher-avatar {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 3px solid #c9a84c;
+            background: #fff;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 6px 20px rgba(201, 168, 76, 0.3);
+        }
+
+        .teacher-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .brand-text h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .brand-text .subtitle {
+            color: #b6d4f0;
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .connection-status {
+            padding: 0.3rem 1rem;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .connection-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .header-badge {
+            background: #c9a84c;
+            color: #0b2a44;
+            padding: 0.4rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 14px rgba(201, 168, 76, 0.25);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: 0.2s;
+            border: none;
+            font-family: inherit;
+        }
+
+        .header-badge:hover {
+            transform: scale(1.03);
+            background: #dbb95a;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #eaf1fb 0%, #dbe6f5 100%);
+            padding: 2.2rem 3rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            flex-shrink: 0;
+        }
+
+        .hero-text {
+            flex: 2;
+            min-width: 260px;
+        }
+
+        .hero-text .badge {
+            display: inline-block;
+            background: #c9a84c;
+            color: #0b2a44;
+            font-weight: 700;
+            padding: 0.15rem 1.2rem;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.6rem;
+        }
+
+        .hero-text h2 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #0b2a44;
+            line-height: 1.15;
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-text h2 span {
+            color: #c9a84c;
+        }
+
+        .hero-text p {
+            color: #1f4a6b;
+            font-size: 1rem;
+            max-width: 560px;
+            line-height: 1.8;
+            opacity: 0.9;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.2rem;
+        }
+
+        .btn-primary {
+            background: #0b2a44;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.8rem 2.4rem;
+            border-radius: 60px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 6px 18px rgba(11, 42, 68, 0.2);
+            font-family: inherit;
+        }
+
+        .btn-primary:hover {
+            background: #1a4a6e;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #c9a84c;
+            border: none;
+            color: #0b2a44;
+            font-weight: 700;
+            padding: 0.8rem 2.4rem;
+            border-radius: 60px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 6px 18px rgba(201, 168, 76, 0.2);
+            font-family: inherit;
+        }
+
+        .btn-secondary:hover {
+            background: #b8973a;
+            transform: translateY(-2px);
+        }
+
+        .specialties-section {
+            padding: 1.5rem 3rem 0.6rem;
+            flex-shrink: 0;
+        }
+
+        .specialties-section .section-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1f4a6b;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.6rem;
+        }
+
+        .specialties-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .specialty-btn {
+            background: #f2f7fd;
+            border: 1px solid #d2dfed;
+            padding: 0.5rem 1.8rem;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1a3d57;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: inherit;
+        }
+
+        .specialty-btn:hover {
+            background: #e3edf8;
+            border-color: #a7bed9;
+        }
+
+        .specialty-btn.active {
+            background: #0b2a44;
+            border-color: #0b2a44;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(11, 42, 68, 0.15);
+        }
+
+        .meet-section {
+            padding: 0.4rem 3rem 0.6rem;
+            flex-shrink: 0;
+        }
+
+        .meet-card {
+            background: #eef2f7;
+            border-radius: 2rem;
+            padding: 1rem 1.8rem;
+            border: 1px solid #cbd8e8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            opacity: 0.7;
+            cursor: default;
+        }
+
+        .meet-card .meet-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .meet-card .meet-info .meet-icon {
+            background: #6a7f98;
+            color: #fff;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .meet-card .meet-info .meet-details h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2a4055;
+        }
+
+        .meet-card .meet-info .meet-details p {
+            font-size: 0.8rem;
+            color: #4a6a8a;
+        }
+
+        .meet-card .meet-status {
+            background: #6a7f98;
+            color: #fff;
+            padding: 0.3rem 1.4rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            font-family: inherit;
+            cursor: not-allowed;
+            opacity: 0.8;
+            letter-spacing: 0.3px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            padding: 1.2rem 3rem 1.5rem;
+            flex: 1;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 1.2rem 1.5rem;
+            }
+            .meet-section {
+                padding: 0.4rem 1.5rem;
+            }
+            .header {
+                padding: 1.2rem 1.5rem;
+            }
+            .hero {
+                padding: 1.5rem 1.5rem;
+            }
+            .specialties-section {
+                padding: 1rem 1.5rem 0.4rem;
+            }
+            body {
+                padding: 0.8rem;
+            }
+            .platform {
+                border-radius: 1.5rem;
+                min-height: 98vh;
+            }
+            .admin-panel {
+                padding: 1.2rem 1.5rem;
+            }
+            .admin-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            .admin-panel .admin-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .announcements-panel {
+            background: #ffffff;
+            border-radius: 2rem;
+            padding: 1.8rem 2rem;
+            border: 1px solid #d3dfed;
+            box-shadow: 0 6px 20px rgba(0, 20, 40, 0.04);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .announcements-panel h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0b2a44;
+            margin-bottom: 0.8rem;
+        }
+
+        .announcements-panel h3 span {
+            color: #c9a84c;
+        }
+
+        .announcement-item {
+            background: #f8fbff;
+            border-radius: 1.2rem;
+            padding: 1rem 1.4rem;
+            margin-bottom: 0.8rem;
+            border-right: 4px solid #c9a84c;
+            border-left: 1px solid #e8edf5;
+            transition: 0.15s;
+        }
+
+        .announcement-item:hover {
+            background: #f0f6fe;
+        }
+
+        .announcement-item .announce-title {
+            font-weight: 700;
+            color: #0b2a44;
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .announcement-item .announce-date {
+            font-size: 0.7rem;
+            color: #6a8aaa;
+            font-weight: 500;
+        }
+
+        .announcement-item .announce-body {
+            font-size: 0.9rem;
+            color: #1f4a6b;
+            margin-top: 0.3rem;
+            line-height: 1.6;
+        }
+
+        .announcement-item .announce-tag {
+            display: inline-block;
+            background: #c9a84c;
+            color: #0b2a44;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.1rem 0.8rem;
+            border-radius: 40px;
+            margin-top: 0.4rem;
+        }
+
+        .register-section {
+            padding: 1.5rem 3rem 2rem;
+            border-top: 2px solid rgba(11, 42, 68, 0.06);
+            flex-shrink: 0;
+        }
+
+        .register-section .register-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0b2a44;
+            margin-bottom: 1rem;
+        }
+
+        .register-section .register-title span {
+            color: #c9a84c;
+        }
+
+        .register-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem 1.5rem;
+        }
+
+        .register-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .register-grid label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1f4a6b;
+            margin-bottom: 0.2rem;
+        }
+
+        .register-grid input,
+        .register-grid select {
+            width: 100%;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            border: 1px solid #cbdae9;
+            background: #f8fbff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.15s;
+            font-family: inherit;
+        }
+
+        .register-grid input:focus,
+        .register-grid select:focus {
+            border-color: #c9a84c;
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+        }
+
+        .register-grid input::placeholder {
+            color: #a0b8cf;
+        }
+
+        .register-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 1.2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .register-btn {
+            background: #c9a84c;
+            border: none;
+            color: #0b2a44;
+            font-weight: 700;
+            padding: 0.7rem 2.8rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 1rem;
+            box-shadow: 0 4px 14px rgba(201, 168, 76, 0.25);
+            font-family: inherit;
+        }
+
+        .register-btn:hover {
+            background: #b8973a;
+            transform: translateY(-2px);
+        }
+
+        .register-status {
+            font-size: 0.95rem;
+            color: #1f4a6b;
+            font-weight: 450;
+            flex: 1;
+            min-width: 150px;
+            padding: 0.5rem 0;
+        }
+
+        .register-status.success {
+            color: #1a7a3a;
+        }
+
+        .register-status.error {
+            color: #b13e3e;
+        }
+
+        .academic-border {
+            border-top: 4px double #c9a84c;
+            margin: 0 3rem;
+            opacity: 0.3;
+            flex-shrink: 0;
+        }
+
+        .success-check {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+        .success-details {
+            background: #f2f7fd;
+            border-radius: 1.2rem;
+            padding: 1rem 1.5rem;
+            text-align: right;
+            font-size: 0.95rem;
+            color: #1a3d57;
+            margin-bottom: 1.5rem;
+            border: 1px solid #d3dfed;
+        }
+        .success-details .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            border-bottom: 1px dashed rgba(0,0,0,0.04);
+        }
+        .success-details .row:last-child {
+            border-bottom: none;
+        }
+        .success-details .label {
+            font-weight: 600;
+            color: #0b2a44;
+        }
+        .success-details .value {
+            color: #1f4a6b;
+        }
+        .btn-success-close {
+            background: #0b2a44;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 0.8rem 2.8rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            box-shadow: 0 6px 18px rgba(11, 42, 68, 0.15);
+        }
+        .btn-success-close:hover {
+            background: #1a4a6e;
+            transform: translateY(-2px);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #c9a84c;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ====== صفحة عرض الجدول المنفصلة ====== */
+        .table-page-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 2rem;
+        }
+
+        .table-page-overlay.active {
+            display: flex;
+        }
+
+        .table-page-content {
+            background: #ffffff;
+            border-radius: 2.5rem;
+            width: 100%;
+            max-width: 1300px;
+            max-height: 90vh;
+            padding: 2rem;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+            animation: popIn 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .table-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .table-page-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0b2a44;
+        }
+
+        .table-page-header h2 span {
+            color: #c9a84c;
+        }
+
+        .btn-close-table {
+            background: #d34f4f;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.5rem 2rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .btn-close-table:hover {
+            background: #b13e3e;
+            transform: scale(0.95);
+        }
+
+        .table-page-wrap {
+            flex: 1;
+            overflow: auto;
+            border-radius: 1.5rem;
+            border: 1px solid #d3dfed;
+            background: white;
+        }
+
+        .table-page-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: inherit;
+            min-width: 700px;
+        }
+
+        .table-page-wrap thead {
+            background: linear-gradient(145deg, #0b2a44, #1a4a6e);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table-page-wrap th {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 1.2rem 1.8rem;
+            text-align: right;
+            border-bottom: 3px solid #c9a84c;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+
+        .table-page-wrap td {
+            padding: 1.2rem 1.8rem;
+            font-size: 1.05rem;
+            color: #1a3d57;
+            border-bottom: 1px solid #eef2f7;
+            background: #ffffff;
+        }
+
+        .table-page-wrap tbody tr {
+            transition: 0.2s;
+        }
+
+        .table-page-wrap tbody tr:hover {
+            background: #f5f9ff;
+        }
+
+        .table-page-wrap tbody tr:hover td {
+            background: #f5f9ff;
+        }
+
+        .table-page-wrap tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-page-wrap tbody tr:nth-child(even) td {
+            background: #fafcfe;
+        }
+
+        .table-page-wrap tbody tr:nth-child(even):hover td {
+            background: #f5f9ff;
+        }
+
+        .table-page-wrap .empty-msg {
+            padding: 3rem;
+            text-align: center;
+            color: #6a8aaa;
+            font-size: 1.2rem;
+            background: #f8fbff !important;
+        }
+
+        .table-page-wrap .btn-delete {
+            background: #d34f4f;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.4rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(211, 79, 79, 0.2);
+        }
+
+        .table-page-wrap .btn-delete:hover {
+            background: #b13e3e;
+            transform: scale(0.95);
+            box-shadow: 0 2px 12px rgba(211, 79, 79, 0.3);
+        }
+
+        .table-page-wrap .stat-number-lg {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .table-page-wrap .stat-avg-general {
+            color: #0b2a44;
+            font-weight: 700;
+        }
+
+        .table-page-wrap .stat-avg-math {
+            color: #c9a84c;
+            font-weight: 700;
+        }
+
+        @media (max-width: 700px) {
+            .table-page-content {
+                padding: 1rem;
+                max-height: 95vh;
+            }
+            .table-page-wrap th,
+            .table-page-wrap td {
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+            .table-page-header h2 {
+                font-size: 1.3rem;
+            }
+            .btn-close-table {
+                padding: 0.3rem 1.2rem;
+                font-size: 0.85rem;
+            }
+            .table-page-wrap table {
+                min-width: 600px;
+            }
+            .table-page-overlay {
+                padding: 0.5rem;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .table-page-wrap th,
+            .table-page-wrap td {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            .table-page-wrap table {
+                min-width: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== PASSWORD POPUP ===== -->
+<div class="overlay" id="passwordOverlay">
+    <div class="popup">
+        <h2>الدخول إلى <span>الإدارة</span></h2>
+        <p>أدخل رقم المرور للوصول إلى لوحة التحكم</p>
+        <input type="password" class="password-input" id="adminPassword" placeholder="..... " maxlength="10">
+        <div class="popup-error" id="passwordError">رقم المرور غير صحيح</div>
+        <div class="popup-actions">
+            <button class="btn-popup-primary" id="passwordConfirmBtn">تأكيد</button>
+            <button class="btn-popup-secondary" id="passwordCancelBtn">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CONFIRMATION POPUP ===== -->
+<div class="overlay" id="confirmationOverlay">
+    <div class="popup">
+        <div class="success-check">&#10004;</div>
+        <h2>تم <span>التسجيل</span> بنجاح</h2>
+        <p>سيتم الاتصال بكم لتأكيد تسجيلكم في أقرب وقت ممكن.</p>
+        <div class="success-details">
+            <div class="row">
+                <span class="label">الاسم واللقب</span>
+                <span class="value" id="popupName">-</span>
+            </div>
+            <div class="row">
+                <span class="label">الشعبة</span>
+                <span class="value" id="popupSpecialty">-</span>
+            </div>
+            <div class="row">
+                <span class="label">الولاية</span>
+                <span class="value" id="popupWilaya">-</span>
+            </div>
+            <div class="row">
+                <span class="label">رقم الهاتف</span>
+                <span class="value" id="popupPhone">-</span>
+            </div>
+            <div class="row">
+                <span class="label">المعدل العام</span>
+                <span class="value" id="popupAvgSecond">-</span>
+            </div>
+            <div class="row">
+                <span class="label">معدل الرياضيات</span>
+                <span class="value" id="popupAvgMath">-</span>
+            </div>
+        </div>
+        <button class="btn-success-close" id="closePopupBtn">حسنا</button>
+    </div>
+</div>
+
+<!-- ====== صفحة عرض الجدول المنفصلة ====== -->
+<div class="table-page-overlay" id="tablePageOverlay">
+    <div class="table-page-content">
+        <div class="table-page-header">
+            <h2>قائمة <span>التلاميذ المسجلين</span></h2>
+            <button class="btn-close-table" id="closeTablePageBtn">إغلاق</button>
+        </div>
+        <div class="table-page-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>الاسم واللقب</th>
+                        <th>الشعبة</th>
+                        <th>الولاية</th>
+                        <th>رقم الهاتف</th>
+                        <th>المعدل العام</th>
+                        <th>معدل الرياضيات</th>
+                        <th>الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="tablePageBody">
+                    <tr><td colspan="7" class="empty-msg">جاري تحميل البيانات...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="platform">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="brand">
+            <div class="teacher-avatar">
+                <img src="https://i.ibb.co/LdkVWVh5/Screenshot-20260622-173814-Gallery.jpg" alt="الأستاذ فارس">
+            </div>
+            <div class="brand-text">
+                <h1>منصة الأستاذ فارس</h1>
+                <div class="subtitle">رياضيات - بكالوريا 2027</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="connection-status offline" id="connectionStatus">جاري الاتصال...</span>
+            <button class="header-badge" id="adminAccessBtn">BAC 2027</button>
+        </div>
+    </header>
+
+    <!-- ===== ADMIN PANEL ===== -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-header">
+            <h2>لوحة <span>الإدارة</span></h2>
+            <div class="admin-actions">
+                <button class="btn-view-table" id="viewTableBtn">عرض جدول التسجيلات</button>
+                <button class="btn-logout" id="logoutBtn">تسجيل خروج</button>
+            </div>
+        </div>
+
+        <div class="admin-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="adminTotalStudents">0</div>
+                <div class="stat-label">إجمالي التلاميذ المسجلين</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="adminTotalPosts">0</div>
+                <div class="stat-label">إجمالي المنشورات</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">6</div>
+                <div class="stat-label">شعب متاحة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="storageStatus">متاح</div>
+                <div class="stat-label">حالة التخزين السحابي</div>
+            </div>
+        </div>
+
+        <!-- ===== POSTS MANAGEMENT ===== -->
+        <div class="admin-posts-section">
+            <h4>إدارة المنشورات</h4>
+            <div id="adminPostsList">
+                <!-- posts will be rendered here -->
+            </div>
+            <div class="admin-post-create">
+                <textarea id="adminPostContent" placeholder="اكتب منشورا جديدا..."></textarea>
+                
+                <div class="file-upload-area" id="fileUploadArea">
+                    <label class="upload-label" for="fileInput">
+                        اسحب ملفاً أو <span>اختر ملفاً</span> للرفع (صور، مستندات)
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx">
+                    <div class="upload-preview" id="uploadPreview"></div>
+                </div>
+
+                <div class="post-actions">
+                    <button class="btn-post" id="adminPostBtn">نشر</button>
+                    <span class="post-status" id="adminPostStatus"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-text">
+            <span class="badge">تسجيل مفتوح الآن</span>
+            <h2>تفوق في <span>الرياضيات</span> مع الأستاذ فارس</h2>
+            <p>نحن لا ندرس الرياضيات فقط، بل نبني أسسا قوية تضمن لك التفوق الدراسي والتميز في أرقى التخصصات الجامعية.</p>
+            <div class="hero-actions">
+                <button class="btn-primary" id="heroRegisterBtn">سجل الآن مجانا</button>
+                <button class="btn-secondary" id="heroMeetBtn">دروس مباشرة عبر Meet</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- SPECIALTIES -->
+    <section class="specialties-section">
+        <div class="section-label">الشعب المتاحة</div>
+        <div class="specialties-row" id="specialtiesContainer">
+            <button class="specialty-btn active" data-specialty="all">جميع الشعب</button>
+            <button class="specialty-btn" data-specialty="science">علوم تجريبية</button>
+            <button class="specialty-btn" data-specialty="literature">آداب وفلسفة</button>
+            <button class="specialty-btn" data-specialty="languages">لغات أجنبية</button>
+            <button class="specialty-btn" data-specialty="math">رياضيات</button>
+            <button class="specialty-btn" data-specialty="tech-math">تقني رياضي</button>
+            <button class="specialty-btn" data-specialty="economics">تسيير واقتصاد</button>
+        </div>
+    </section>
+
+    <!-- MEET -->
+    <div class="meet-section">
+        <div class="meet-card">
+            <div class="meet-info">
+                <div class="meet-icon">M</div>
+                <div class="meet-details">
+                    <h4>دروس مباشرة</h4>
+                    <p>جلسات أسبوعية عبر Meet</p>
+                </div>
+            </div>
+            <span class="meet-status">غير متاح</span>
+        </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+        <div></div>
+        <div class="announcements-panel" id="announcementsPanel">
+            <h3>الإعلانات <span>و المنشورات</span></h3>
+            <div id="announcementsContainer">
+                <!-- posts will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ACADEMIC BORDER -->
+    <div class="academic-border"></div>
+
+    <!-- REGISTER SECTION -->
+    <section class="register-section" id="registerSection">
+        <div class="register-title">تسجيل <span>التلميذ</span></div>
+        <form id="registerForm" onsubmit="return false;">
+            <div class="register-grid">
+                <div>
+                    <label for="firstName">الاسم</label>
+                    <input type="text" id="firstName" placeholder="مثال: أحمد" required>
+                </div>
+                <div>
+                    <label for="lastName">اللقب</label>
+                    <input type="text" id="lastName" placeholder="مثال: محمدي" required>
+                </div>
+                <div>
+                    <label for="registerSpecialty">الشعبة</label>
+                    <select id="registerSpecialty" required>
+                        <option value="">اختر الشعبة</option>
+                        <option value="science">علوم تجريبية</option>
+                        <option value="literature">آداب وفلسفة</option>
+                        <option value="languages">لغات أجنبية</option>
+                        <option value="math">رياضيات</option>
+                        <option value="tech-math">تقني رياضي</option>
+                        <option value="economics">تسيير واقتصاد</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="wilaya">الولاية</label>
+                    <input type="text" id="wilaya" placeholder="مثال: الجزائر" required>
+                </div>
+                <div>
+                    <label for="phone">رقم الهاتف</label>
+                    <input type="tel" id="phone" placeholder="مثال: 0555123456" required>
+                </div>
+                <div>
+                    <label for="avgSecond">المعدل العام (سنة ثانية ثانوي)</label>
+                    <input type="number" id="avgSecond" placeholder="مثال: 15.50" step="0.01" min="0" max="20" required>
+                </div>
+                <div class="full-width">
+                    <label for="avgMath">معدل الرياضيات (سنة ثانية ثانوي)</label>
+                    <input type="number" id="avgMath" placeholder="مثال: 16.75" step="0.01" min="0" max="20" required>
+                </div>
+            </div>
+
+            <div class="register-actions">
+                <button type="button" class="register-btn" id="registerBtn">تسجيل</button>
+                <div class="register-status" id="registerStatus">املأ البيانات ثم اضغط تسجيل</div>
+            </div>
+        </form>
+    </section>
+
+</div>
+
+<script>
+    // ============================================================
+    // FIREBASE CONFIG
+    // ============================================================
+    var firebaseConfig = {
+        apiKey: "AIzaSyDumFyOBqNkvAzVSBHuHKPpAeCuT_vTQ1k",
+        authDomain: "silk-e8553.firebaseapp.com",
+        projectId: "silk-e8553",
+        storageBucket: "silk-e8553.firebasestorage.app",
+        messagingSenderId: "506032964970",
+        appId: "1:506032964970:web:9b51a0e95949ed7b38d113"
+    };
+
+    // ============================================================
+    // تهيئة Firebase
+    // ============================================================
+    var db = null;
+    var storage = null;
+    var students = [];
+    var posts = [];
+    var selectedFile = null;
+    var uploadedFileURL = null;
+
+    try {
+        if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            storage = firebase.storage();
+            console.log('تم تهيئة Firebase بنجاح');
+            updateConnectionStatus(true);
+            
+            var storageStatus = document.getElementById('storageStatus');
+            if (storageStatus) {
+                storageStatus.textContent = 'متاح';
+                storageStatus.style.color = '#1a7a3a';
+            }
+        } else {
+            console.warn('Firebase SDK لم يتم تحميله');
+            updateConnectionStatus(false);
+            var storageStatus = document.getElementById('storageStatus');
+            if (storageStatus) {
+                storageStatus.textContent = 'غير متاح';
+                storageStatus.style.color = '#b13e3e';
+            }
+        }
+    } catch (e) {
+        console.error('خطأ في تهيئة Firebase:', e.message);
+        db = null;
+        storage = null;
+        updateConnectionStatus(false);
+        var storageStatus = document.getElementById('storageStatus');
+        if (storageStatus) {
+            storageStatus.textContent = 'خطأ';
+            storageStatus.style.color = '#b13e3e';
+        }
+    }
+
+    // ============================================================
+    // عناصر DOM
+    // ============================================================
+    var adminAccessBtn = document.getElementById('adminAccessBtn');
+    var passwordOverlay = document.getElementById('passwordOverlay');
+    var passwordInput = document.getElementById('adminPassword');
+    var passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+    var passwordCancelBtn = document.getElementById('passwordCancelBtn');
+    var passwordError = document.getElementById('passwordError');
+    var adminPanel = document.getElementById('adminPanel');
+    var logoutBtn = document.getElementById('logoutBtn');
+
+    var adminTotalStudents = document.getElementById('adminTotalStudents');
+    var adminTotalPosts = document.getElementById('adminTotalPosts');
+    var adminPostsList = document.getElementById('adminPostsList');
+
+    var adminPostContent = document.getElementById('adminPostContent');
+    var adminPostBtn = document.getElementById('adminPostBtn');
+    var adminPostStatus = document.getElementById('adminPostStatus');
+
+    var announcementsContainer = document.getElementById('announcementsContainer');
+
+    var confirmationOverlay = document.getElementById('confirmationOverlay');
+    var closePopupBtn = document.getElementById('closePopupBtn');
+    var popupName = document.getElementById('popupName');
+    var popupSpecialty = document.getElementById('popupSpecialty');
+    var popupWilaya = document.getElementById('popupWilaya');
+    var popupPhone = document.getElementById('popupPhone');
+    var popupAvgSecond = document.getElementById('popupAvgSecond');
+    var popupAvgMath = document.getElementById('popupAvgMath');
+
+    var firstName = document.getElementById('firstName');
+    var lastName = document.getElementById('lastName');
+    var registerSpecialty = document.getElementById('registerSpecialty');
+    var wilaya = document.getElementById('wilaya');
+    var phone = document.getElementById('phone');
+    var avgSecond = document.getElementById('avgSecond');
+    var avgMath = document.getElementById('avgMath');
+    var registerBtn = document.getElementById('registerBtn');
+    var registerStatus = document.getElementById('registerStatus');
+    var heroRegisterBtn = document.getElementById('heroRegisterBtn');
+
+    var specialtyBtns = document.querySelectorAll('#specialtiesContainer button');
+    var connectionStatus = document.getElementById('connectionStatus');
+
+    var fileInput = document.getElementById('fileInput');
+    var fileUploadArea = document.getElementById('fileUploadArea');
+    var uploadPreview = document.getElementById('uploadPreview');
+
+    // عناصر صفحة الجدول المنفصلة
+    var tablePageOverlay = document.getElementById('tablePageOverlay');
+    var tablePageBody = document.getElementById('tablePageBody');
+    var viewTableBtn = document.getElementById('viewTableBtn');
+    var closeTablePageBtn = document.getElementById('closeTablePageBtn');
+
+    // ============================================================
+    // دوال العرض
+    // ============================================================
+
+    function setActiveSpecialty(specialty) {
+        specialtyBtns.forEach(function(btn) {
+            if (btn.dataset.specialty === specialty) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function updateConnectionStatus(isConnected) {
+        if (!connectionStatus) return;
+        if (isConnected) {
+            connectionStatus.textContent = 'متصل';
+            connectionStatus.className = 'connection-status online';
+        } else {
+            connectionStatus.textContent = 'غير متصل';
+            connectionStatus.className = 'connection-status offline';
+        }
+    }
+
+    function updateStats() {
+        if (adminTotalStudents) adminTotalStudents.textContent = students.length;
+        if (adminTotalPosts) adminTotalPosts.textContent = posts.length;
+    }
+
+    function renderAdminTable() {
+        // لا نعرض جدول في لوحة الإدارة، فقط نحدث الإحصائيات
+        updateStats();
+    }
+
+    // ====== عرض الجدول في الصفحة المنفصلة ======
+    function renderTablePage() {
+        if (!tablePageBody) return;
+        
+        if (students.length === 0) {
+            tablePageBody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا يوجد تلاميذ مسجلين بعد</td></tr>';
+        } else {
+            var html = '';
+            for (var i = 0; i < students.length; i++) {
+                var s = students[i];
+                html += '<tr>' +
+                    '<td><strong>' + (s.fullName || '') + '</strong></td>' +
+                    '<td>' + (s.specialtyText || '') + '</td>' +
+                    '<td>' + (s.wilaya || '') + '</td>' +
+                    '<td dir="ltr" style="text-align:left;">' + (s.phone || '') + '</td>' +
+                    '<td><span class="stat-avg-general">' + (s.avgSecond || '') + '</span></td>' +
+                    '<td><span class="stat-avg-math">' + (s.avgMath || '') + '</span></td>' +
+                    '<td><button class="btn-delete" data-id="' + s.id + '">حذف</button></td>' +
+                    '</tr>';
+            }
+            tablePageBody.innerHTML = html;
+
+            var deleteBtns = document.querySelectorAll('#tablePageBody .btn-delete');
+            for (var j = 0; j < deleteBtns.length; j++) {
+                deleteBtns[j].addEventListener('click', function() {
+                    var id = this.dataset.id;
+                    if (confirm('هل أنت متأكد من حذف هذا التلميذ؟')) {
+                        deleteStudent(id);
+                    }
+                });
+            }
+        }
+        updateStats();
+    }
+
+    function renderPosts() {
+        if (!adminPostsList) return;
+        
+        if (posts.length === 0) {
+            adminPostsList.innerHTML = '<div style="text-align:center;padding:1rem;color:#6a8aaa;">لا توجد منشورات</div>';
+        } else {
+            var html = '';
+            for (var i = 0; i < posts.length; i++) {
+                var p = posts[i];
+                var fileLink = p.fileURL ? '<br><a href="' + p.fileURL + '" target="_blank" style="color:#c9a84c;font-size:0.8rem;">تحميل المرفق</a>' : '';
+                html += '<div class="admin-post-item">' +
+                    '<div class="post-content">' +
+                    (p.body || '') +
+                    fileLink +
+                    '<span class="post-date">' + (p.date || '') + '</span>' +
+                    '</div>' +
+                    '<div class="post-actions">' +
+                    '<button class="btn-edit" data-id="' + p.id + '">تعديل</button>' +
+                    '<button class="btn-delete-post" data-id="' + p.id + '">حذف</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+            adminPostsList.innerHTML = html;
+
+            var editBtns = document.querySelectorAll('.btn-edit');
+            for (var j = 0; j < editBtns.length; j++) {
+                editBtns[j].addEventListener('click', function() {
+                    var id = this.dataset.id;
+                    var body = '';
+                    for (var k = 0; k < posts.length; k++) {
+                        if (posts[k].id == id) { body = posts[k].body; break; }
+                    }
+                    var newBody = prompt('تعديل المنشور:', body);
+                    if (newBody !== null && newBody.trim() !== '') {
+                        updatePost(id, newBody.trim());
+                    }
+                });
+            }
+
+            var deleteBtns = document.querySelectorAll('.btn-delete-post');
+            for (var l = 0; l < deleteBtns.length; l++) {
+                deleteBtns[l].addEventListener('click', function() {
+                    var id = this.dataset.id;
+                    if (confirm('هل أنت متأكد من حذف هذا المنشور؟')) {
+                        deletePost(id);
+                    }
+                });
+            }
+        }
+
+        if (!announcementsContainer) return;
+        
+        if (posts.length === 0) {
+            announcementsContainer.innerHTML = '<div style="text-align:center;padding:2rem;color:#6a8aaa;">لا توجد منشورات حاليا</div>';
+        } else {
+            var html2 = '';
+            for (var m = 0; m < posts.length; m++) {
+                var p2 = posts[m];
+                var fileLink2 = p2.fileURL ? '<br><a href="' + p2.fileURL + '" target="_blank" style="color:#c9a84c;font-size:0.8rem;">تحميل المرفق</a>' : '';
+                html2 += '<div class="announcement-item">' +
+                    '<div class="announce-title">منشور</div>' +
+                    '<div class="announce-date">' + (p2.date || '') + '</div>' +
+                    '<div class="announce-body">' + (p2.body || '') + fileLink2 + '</div>' +
+                    '<span class="announce-tag">منشور</span>' +
+                    '</div>';
+            }
+            announcementsContainer.innerHTML = html2;
+        }
+        updateStats();
+    }
+
+    // ============================================================
+    // دوال CRUD مع Firestore
+    // ============================================================
+
+    function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    function addStudent(studentData) {
+        studentData.id = generateId();
+        studentData.timestamp = Date.now();
+        
+        students.unshift(studentData);
+
+        if (db) {
+            try {
+                db.collection('students').doc(studentData.id).set(studentData)
+                    .then(function() {
+                        console.log('تم حفظ الطالب في Firestore:', studentData.id);
+                        renderAdminTable();
+                        renderTablePage();
+                        updateConnectionStatus(true);
+                    })
+                    .catch(function(error) {
+                        console.error('خطأ في حفظ الطالب:', error);
+                        renderAdminTable();
+                        renderTablePage();
+                        updateConnectionStatus(false);
+                    });
+            } catch (e) {
+                console.error('خطأ:', e);
+                renderAdminTable();
+                renderTablePage();
+            }
+        } else {
+            renderAdminTable();
+            renderTablePage();
+        }
+    }
+
+    function deleteStudent(id) {
+        for (var i = 0; i < students.length; i++) {
+            if (students[i].id == id) {
+                students.splice(i, 1);
+                break;
+            }
+        }
+        renderAdminTable();
+        renderTablePage();
+
+        if (db) {
+            try {
+                db.collection('students').doc(id).delete()
+                    .then(function() {
+                        console.log('تم حذف الطالب من Firestore');
+                    })
+                    .catch(function(error) {
+                        console.error('خطأ في الحذف:', error);
+                    });
+            } catch (e) {
+                console.error('خطأ:', e);
+            }
+        }
+    }
+
+    function addPost(postData) {
+        postData.id = generateId();
+        postData.timestamp = Date.now();
+        posts.unshift(postData);
+
+        if (db) {
+            try {
+                db.collection('posts').doc(postData.id).set(postData)
+                    .then(function() {
+                        console.log('تم حفظ المنشور في Firestore:', postData.id);
+                        renderPosts();
+                        updateConnectionStatus(true);
+                    })
+                    .catch(function(error) {
+                        console.error('خطأ في حفظ المنشور:', error);
+                        renderPosts();
+                        updateConnectionStatus(false);
+                    });
+            } catch (e) {
+                console.error('خطأ:', e);
+                renderPosts();
+            }
+        } else {
+            renderPosts();
+        }
+    }
+
+    function updatePost(id, newBody) {
+        for (var i = 0; i < posts.length; i++) {
+            if (posts[i].id == id) {
+                posts[i].body = newBody;
+                break;
+            }
+        }
+        renderPosts();
+
+        if (db) {
+            try {
+                db.collection('posts').doc(id).update({ body: newBody })
+                    .then(function() {
+                        console.log('تم تعديل المنشور في Firestore');
+                    })
+                    .catch(function(error) {
+                        console.error('خطأ في التعديل:', error);
+                    });
+            } catch (e) {
+                console.error('خطأ:', e);
+            }
+        }
+    }
+
+    function deletePost(id) {
+        for (var i = 0; i < posts.length; i++) {
+            if (posts[i].id == id) {
+                posts.splice(i, 1);
+                break;
+            }
+        }
+        renderPosts();
+
+        if (db) {
+            try {
+                db.collection('posts').doc(id).delete()
+                    .then(function() {
+                        console.log('تم حذف المنشور من Firestore');
+                    })
+                    .catch(function(error) {
+                        console.error('خطأ في الحذف:', error);
+                    });
+            } catch (e) {
+                console.error('خطأ:', e);
+            }
+        }
+    }
+
+    // ============================================================
+    // دوال رفع الملفات
+    // ============================================================
+
+    function uploadFileToStorage(file) {
+        return new Promise(function(resolve, reject) {
+            if (!storage) {
+                reject(new Error('Firebase Storage غير متاح'));
+                return;
+            }
+
+            var fileName = Date.now() + '_' + file.name;
+            var storageRef = storage.ref('uploads/' + fileName);
+            var uploadTask = storageRef.put(file);
+
+            uploadTask.on('state_changed',
+                function(snapshot) {
+                    var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log('جاري الرفع:', Math.round(progress) + '%');
+                },
+                function(error) {
+                    console.error('خطأ في الرفع:', error);
+                    reject(error);
+                },
+                function() {
+                    uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                        console.log('تم رفع الملف:', downloadURL);
+                        resolve(downloadURL);
+                    }).catch(function(error) {
+                        reject(error);
+                    });
+                }
+            );
+        });
+    }
+
+    function handleFileSelection(event) {
+        var file = event.target.files[0];
+        if (!file) {
+            selectedFile = null;
+            uploadedFileURL = null;
+            uploadPreview.innerHTML = '';
+            return;
+        }
+
+        selectedFile = file;
+        
+        if (file.type.startsWith('image/')) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                uploadPreview.innerHTML = '<img src="' + e.target.result + '" alt="معاينة الملف">';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            uploadPreview.innerHTML = '<span class="file-name">' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' كيلوبايت)</span>';
+        }
+
+        uploadFileToStorage(file)
+            .then(function(url) {
+                uploadedFileURL = url;
+                if (adminPostStatus) {
+                    adminPostStatus.textContent = 'تم رفع الملف بنجاح';
+                    adminPostStatus.style.color = '#1a7a3a';
+                }
+            })
+            .catch(function(error) {
+                console.error('فشل رفع الملف:', error);
+                if (adminPostStatus) {
+                    adminPostStatus.textContent = 'فشل رفع الملف';
+                    adminPostStatus.style.color = '#b13e3e';
+                }
+            });
+    }
+
+    // ============================================================
+    // دوال النوافذ المنبثقة
+    // ============================================================
+
+    function showConfirmationPopup(data) {
+        if (popupName) popupName.textContent = data.fullName || '';
+        if (popupSpecialty) popupSpecialty.textContent = data.specialtyText || '';
+        if (popupWilaya) popupWilaya.textContent = data.wilaya || '';
+        if (popupPhone) popupPhone.textContent = data.phone || '';
+        if (popupAvgSecond) popupAvgSecond.textContent = data.avgSecond || '';
+        if (popupAvgMath) popupAvgMath.textContent = data.avgMath || '';
+        if (confirmationOverlay) {
+            confirmationOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function hideConfirmationPopup() {
+        if (confirmationOverlay) {
+            confirmationOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function showPasswordPopup() {
+        if (passwordOverlay) {
+            passwordOverlay.classList.add('active');
+            if (passwordInput) passwordInput.value = '';
+            if (passwordError) passwordError.classList.remove('show');
+            document.body.style.overflow = 'hidden';
+            if (passwordInput) passwordInput.focus();
+        }
+    }
+
+    function hidePasswordPopup() {
+        if (passwordOverlay) {
+            passwordOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function toggleAdminPanel(show) {
+        if (!adminPanel) return;
+        if (show) {
+            adminPanel.classList.add('active');
+            setTimeout(function() {
+                adminPanel.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        } else {
+            adminPanel.classList.remove('active');
+        }
+    }
+
+    function logout() {
+        toggleAdminPanel(false);
+        hidePasswordPopup();
+        if (passwordError) passwordError.classList.remove('show');
+        if (passwordInput) passwordInput.value = '';
+    }
+
+    function scrollToRegister() {
+        var section = document.getElementById('registerSection');
+        if (section) section.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ============================================================
+    // دوال التسجيل والنشر الرئيسية
+    // ============================================================
+
+    function registerStudent() {
+        var fName = firstName.value.trim();
+        var lName = lastName.value.trim();
+        var specialty = registerSpecialty.value;
+        var wil = wilaya.value.trim();
+        var ph = phone.value.trim();
+        var avg2 = avgSecond.value.trim();
+        var avgM = avgMath.value.trim();
+
+        if (!fName || !lName || !specialty || !wil || !ph || !avg2 || !avgM) {
+            if (registerStatus) {
+                registerStatus.textContent = 'الرجاء ملء جميع الحقول';
+                registerStatus.className = 'register-status error';
+            }
+            return;
+        }
+
+        if (isNaN(parseFloat(avg2)) || parseFloat(avg2) < 0 || parseFloat(avg2) > 20) {
+            if (registerStatus) {
+                registerStatus.textContent = 'المعدل العام يجب أن يكون بين 0 و 20';
+                registerStatus.className = 'register-status error';
+            }
+            return;
+        }
+
+        if (isNaN(parseFloat(avgM)) || parseFloat(avgM) < 0 || parseFloat(avgM) > 20) {
+            if (registerStatus) {
+                registerStatus.textContent = 'معدل الرياضيات يجب أن يكون بين 0 و 20';
+                registerStatus.className = 'register-status error';
+            }
+            return;
+        }
+
+        var specMap = {
+            'science': 'science', 'literature': 'literature',
+            'languages': 'languages', 'math': 'math',
+            'tech-math': 'tech-math', 'economics': 'economics'
+        };
+        var matched = specMap[specialty] || 'all';
+        setActiveSpecialty(matched);
+
+        var specialtyText = registerSpecialty.options[registerSpecialty.selectedIndex].text;
+        var fullName = fName + ' ' + lName;
+
+        var studentData = {
+            fullName: fullName,
+            specialtyText: specialtyText,
+            wilaya: wil,
+            phone: ph,
+            avgSecond: avg2,
+            avgMath: avgM
+        };
+
+        if (registerStatus) {
+            registerStatus.innerHTML = 'جاري التسجيل... <span class="loading-spinner"></span>';
+            registerStatus.className = 'register-status';
+        }
+
+        setTimeout(function() {
+            try {
+                addStudent(studentData);
+                showConfirmationPopup(studentData);
+
+                firstName.value = '';
+                lastName.value = '';
+                registerSpecialty.value = '';
+                wilaya.value = '';
+                phone.value = '';
+                avgSecond.value = '';
+                avgMath.value = '';
+
+                if (registerStatus) {
+                    registerStatus.innerHTML = 'تم التسجيل بنجاح';
+                    registerStatus.className = 'register-status success';
+                }
+            } catch (e) {
+                console.error('خطأ في التسجيل:', e);
+                if (registerStatus) {
+                    registerStatus.textContent = 'حدث خطأ أثناء التسجيل. حاول مرة أخرى.';
+                    registerStatus.className = 'register-status error';
+                }
+            }
+        }, 300);
+    }
+
+    function postAnnouncement() {
+        if (!adminPostContent || !adminPostStatus) return;
+        
+        var content = adminPostContent.value.trim();
+        if (!content) {
+            adminPostStatus.textContent = 'الرجاء كتابة محتوى المنشور';
+            adminPostStatus.style.color = '#b13e3e';
+            return;
+        }
+
+        var now = new Date();
+        // أسماء الأشهر باللهجة المغاربية
+        var months = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        var dateStr = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+        var postData = {
+            body: content,
+            date: dateStr
+        };
+
+        if (uploadedFileURL) {
+            postData.fileURL = uploadedFileURL;
+        }
+
+        adminPostStatus.innerHTML = 'جاري النشر... <span class="loading-spinner"></span>';
+        adminPostStatus.style.color = '#1f4a6b';
+
+        setTimeout(function() {
+            try {
+                addPost(postData);
+                adminPostContent.value = '';
+                uploadedFileURL = null;
+                selectedFile = null;
+                if (uploadPreview) uploadPreview.innerHTML = '';
+                if (fileInput) fileInput.value = '';
+                adminPostStatus.innerHTML = 'تم نشر المنشور بنجاح';
+                adminPostStatus.style.color = '#1a7a3a';
+            } catch (e) {
+                console.error('خطأ في النشر:', e);
+                adminPostStatus.textContent = 'حدث خطأ أثناء النشر. حاول مرة أخرى.';
+                adminPostStatus.style.color = '#b13e3e';
+            }
+        }, 300);
+    }
+
+    // ============================================================
+    // تحميل البيانات من Firestore
+    // ============================================================
+
+    function loadStudentsFromFirestore() {
+        if (!db) {
+            renderAdminTable();
+            renderTablePage();
+            return;
+        }
+
+        try {
+            db.collection('students').orderBy('timestamp', 'desc').get()
+                .then(function(querySnapshot) {
+                    var firebaseStudents = [];
+                    querySnapshot.forEach(function(doc) {
+                        var data = doc.data();
+                        data.id = doc.id;
+                        firebaseStudents.push(data);
+                    });
+                    
+                    students = firebaseStudents;
+                    renderAdminTable();
+                    renderTablePage();
+                    updateConnectionStatus(true);
+                    console.log('تم تحميل الطلاب من Firestore:', students.length);
+                })
+                .catch(function(error) {
+                    console.error('خطأ في تحميل الطلاب:', error);
+                    renderAdminTable();
+                    renderTablePage();
+                    updateConnectionStatus(false);
+                });
+        } catch (e) {
+            console.error('خطأ:', e);
+            renderAdminTable();
+            renderTablePage();
+        }
+    }
+
+    function loadPostsFromFirestore() {
+        if (!db) {
+            renderPosts();
+            return;
+        }
+
+        try {
+            db.collection('posts').orderBy('timestamp', 'desc').get()
+                .then(function(querySnapshot) {
+                    var firebasePosts = [];
+                    querySnapshot.forEach(function(doc) {
+                        var data = doc.data();
+                        data.id = doc.id;
+                        firebasePosts.push(data);
+                    });
+                    
+                    posts = firebasePosts;
+                    renderPosts();
+                    updateConnectionStatus(true);
+                    console.log('تم تحميل المنشورات من Firestore:', posts.length);
+                })
+                .catch(function(error) {
+                    console.error('خطأ في تحميل المنشورات:', error);
+                    renderPosts();
+                    updateConnectionStatus(false);
+                });
+        } catch (e) {
+            console.error('خطأ:', e);
+            renderPosts();
+        }
+    }
+
+    // ============================================================
+    // الأحداث (Event Listeners)
+    // ============================================================
+
+    if (adminAccessBtn) adminAccessBtn.addEventListener('click', showPasswordPopup);
+
+    if (passwordConfirmBtn) {
+        passwordConfirmBtn.addEventListener('click', function() {
+            if (!passwordInput) return;
+            var pass = passwordInput.value.trim();
+            if (pass === 'BAC2025') {
+                hidePasswordPopup();
+                toggleAdminPanel(true);
+            } else {
+                if (passwordError) passwordError.classList.add('show');
+                if (passwordInput) passwordInput.value = '';
+                if (passwordInput) passwordInput.focus();
+            }
+        });
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (passwordConfirmBtn) passwordConfirmBtn.click();
+            }
+        });
+    }
+
+    if (passwordCancelBtn) passwordCancelBtn.addEventListener('click', hidePasswordPopup);
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    if (closePopupBtn) closePopupBtn.addEventListener('click', hideConfirmationPopup);
+    
+    if (confirmationOverlay) {
+        confirmationOverlay.addEventListener('click', function(e) {
+            if (e.target === confirmationOverlay) hideConfirmationPopup();
+        });
+    }
+
+    if (registerBtn) registerBtn.addEventListener('click', registerStudent);
+    if (heroRegisterBtn) heroRegisterBtn.addEventListener('click', scrollToRegister);
+
+    var registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                registerStudent();
+            }
+        });
+    }
+
+    if (adminPostBtn) adminPostBtn.addEventListener('click', postAnnouncement);
+
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelection);
+    }
+
+    if (fileUploadArea) {
+        fileUploadArea.addEventListener('click', function() {
+            if (fileInput) fileInput.click();
+        });
+        
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#c9a84c';
+            this.style.background = '#f0f6fe';
+        });
+        
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#cbdae9';
+            this.style.background = '#f8fbff';
+        });
+        
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#cbdae9';
+            this.style.background = '#f8fbff';
+            if (e.dataTransfer.files.length > 0) {
+                if (fileInput) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileInput.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+    }
+
+    // ====== أحداث صفحة الجدول المنفصلة ======
+    if (viewTableBtn) {
+        viewTableBtn.addEventListener('click', function() {
+            renderTablePage();
+            if (tablePageOverlay) {
+                tablePageOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        });
+    }
+
+    if (closeTablePageBtn) {
+        closeTablePageBtn.addEventListener('click', function() {
+            if (tablePageOverlay) {
+                tablePageOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+
+    if (tablePageOverlay) {
+        tablePageOverlay.addEventListener('click', function(e) {
+            if (e.target === tablePageOverlay) {
+                tablePageOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+
+    var heroMeetBtn = document.getElementById('heroMeetBtn');
+    if (heroMeetBtn) {
+        heroMeetBtn.addEventListener('click', function() {
+            alert('سيتم تفعيل الدروس المباشرة قريباً');
+        });
+    }
+
+    specialtyBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            setActiveSpecialty(this.dataset.specialty);
+        });
+    });
+
+    // ============================================================
+    // التهيئة الأولية
+    // ============================================================
+    setActiveSpecialty('all');
+    if (registerStatus) {
+        registerStatus.textContent = 'املأ البيانات ثم اضغط تسجيل';
+        registerStatus.className = 'register-status';
+    }
+
+    loadStudentsFromFirestore();
+    loadPostsFromFirestore();
+    
+    console.log('منصة الأستاذ فارس جاهزة');
+    console.log('كلمة المرور: BAC2025');
+    console.log('Firestore:', db ? 'متاح' : 'غير متاح');
+    console.log('Storage:', storage ? 'متاح' : 'غير متاح');
+</script>
+
+</body>
+</html>
